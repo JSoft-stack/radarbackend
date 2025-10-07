@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Post,
+  Body,
   Query,
   ParseFloatPipe,
   DefaultValuePipe,
@@ -18,25 +20,32 @@ export class UserController {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-
-    // private readonly photosService: PhotosService, // ✅ внедряем сервис
-    private readonly usersService: UsersService, // ✅ внедряем сервис
+    private readonly usersService: UsersService,
   ) {}
 
+  // --- GET so'rov (mavjud)
   @Get('nearby')
   async getNearby(
     @Query('user_id', new ParseFloatPipe()) user_id: number,
     @Query('lat', new ParseFloatPipe()) lat: number,
     @Query('lon', new ParseFloatPipe()) lon: number,
     @Query('radius', new DefaultValuePipe(5), new ParseFloatPipe()) radius_km: number,
-    // @Query('limit', new DefaultValuePipe(50), new ParseFloatPipe()) limit: number,
   ) {
     return this.usersService.findNearby(user_id, lat, lon, radius_km);
   }
 
-  
+  // --- POST so'rov (qo'shildi)
+  @Post('nearby')
+  async getNearbyByPost(
+    @Body('user_id') user_id: number,
+    @Body('lat') lat: number,
+    @Body('lon') lon: number,
+    @Body('radius') radius_km: number = 5,
+  ) {
+    return this.usersService.findNearby(user_id, lat, lon, radius_km);
+  }
 
-   @Get()
+  @Get()
   async findAll() {
     const users = await this.userRepository.find();
     return users;
@@ -51,15 +60,13 @@ export class UserController {
 
   private formatUserResponse(user: User) {
     if (!user) return null;
-
     const formatted = { ...user };
 
     if (user.photo) {
-      const fileName = path.basename(user.photo); // только имя файла
-      formatted.photo = `/uploads/${fileName}`; // путь для браузера
+      const fileName = path.basename(user.photo);
+      formatted.photo = `/uploads/${fileName}`;
     }
 
     return formatted;
   }
-
 }
