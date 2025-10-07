@@ -22,7 +22,7 @@ export class UserController {
    @Get()
   async findAll() {
     const users = await this.userRepository.find();
-    return users.map((user) => this.formatUserResponse(user));
+    return users;
   }
 
   @Get(':id')
