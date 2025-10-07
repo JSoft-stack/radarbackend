@@ -38,7 +38,7 @@ export class UsersService {
     `;
 
     const sql = `
-      SELECT id, lat, lon, ${distanceExpr} AS distance_km
+      SELECT *, ${distanceExpr} AS distance_km
       FROM users
       WHERE ${distanceExpr} <= $4 AND user_id <> $1
       ORDER BY distance_km
