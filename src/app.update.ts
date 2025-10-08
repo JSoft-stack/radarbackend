@@ -57,41 +57,41 @@ export class AppUpdate {
 
   @Start()
   async startCommand(ctx: Context) {
-    const userFirstName = ctx.from?.first_name ?? 'there';
+  //   const userFirstName = ctx.from?.first_name ?? 'there';
 
-    const existingUser = await this.appService.getById(String(ctx.from?.id ?? ''));
-    if (!existingUser) {
+  //   const existingUser = await this.appService.getById(String(ctx.from?.id ?? ''));
+  //   if (!existingUser) {
 
-      const data = await this.appService.create({
-        user_id: String(ctx.from?.id ?? ''),
-        first_name: ctx.from?.first_name ?? '',
-        last_name: ctx.from?.last_name ?? '',
-        lat: '',
-        lon: '',
-        last_active_time: '',
-        hide: false,
-      });
-      // return;
-    }
-    else {
-      await ctx.reply(`Welcome back, ${userFirstName}!`, actionButtons());
-    }
+  //     const data = await this.appService.create({
+  //       user_id: String(ctx.from?.id ?? ''),
+  //       first_name: ctx.from?.first_name ?? '',
+  //       last_name: ctx.from?.last_name ?? '',
+  //       lat: '',
+  //       lon: '',
+  //       last_active_time: '',
+  //       hide: false,
+  //     });
+  //     // return;
+  //   }
+  //   else {
+  //     await ctx.reply(`Welcome back, ${userFirstName}!`, actionButtons());
+  //   }
 
 
-    const webAppUrl = `https://myviteapp.loca.lt/`;
+  //   const webAppUrl = `https://myviteapp.loca.lt/`;
 
-    await ctx.reply(
-      `Assalomu alaykum, ${userFirstName}! Please share your location.`,
-      {
-        reply_markup: {
-          keyboard: [
-            [{ text: '📍 Send Location', request_location: true }],
-            [{ text: 'Run MiniApp', web_app: { url: webAppUrl } }],
-          ],
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      },
-    );
+  //   await ctx.reply(
+  //     `Assalomu alaykum, ${userFirstName}! Please share your location.`,
+  //     {
+  //       reply_markup: {
+  //         keyboard: [
+  //           [{ text: '📍 Send Location', request_location: true }],
+  //           [{ text: 'Run MiniApp', web_app: { url: webAppUrl } }],
+  //         ],
+  //         resize_keyboard: true,
+  //         one_time_keyboard: true,
+  //       },
+  //     },
+  //   );
   }
 }
