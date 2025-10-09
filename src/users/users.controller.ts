@@ -82,7 +82,7 @@ export class UsersController {
     }
 
     // Записываем последнюю активность
-    createUserDto['last_active'] = new Date();
+    createUserDto['last_active'] = new Date().toISOString();
 
     if (userExists) {
       await this.userRepository.update(userExists.id, createUserDto);
