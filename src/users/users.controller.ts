@@ -63,7 +63,7 @@ export class UsersController {
     if (createUserDto.photo_url) {
       const localPath = await this.downloadAndSave(
         createUserDto.photo_url,
-        createUserDto.user_id,
+        Number(createUserDto.user_id),
       );
       createUserDto.photo = localPath; // сохраняем локальный путь
     }
