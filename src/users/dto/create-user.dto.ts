@@ -4,7 +4,7 @@ export class CreateUserDto {
     last_name: string;
     lat: string;
     lon: string;
-    last_active: string;
+    last_active_time: string;
     hide: boolean;
     photo_url?: string; // добавлено поле для URL фото
     photo: string; // добавлено поле для локального пути к фото
