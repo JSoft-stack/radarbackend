@@ -17,27 +17,33 @@ async function bootstrap() {
   }
 
     // Статическая раздача
-  app.use('/uploads', express.static(uploadsDir));
+  // app.use('/uploads', express.static(uploadsDir));
 
-  // Если зашли просто на /uploads — возвращаем сообщение вместо ошибки
-  app.use('/uploads', (req, res) => {
-    res.status(200).send('Uploads directory — доступ только к файлам.');
-  });
+  // // Если зашли просто на /uploads — возвращаем сообщение вместо ошибки
+  // app.use('/uploads', (req, res) => {
+  //   res.status(200).send('Uploads directory — доступ только к файлам.');
+  // });
   // --- 2. Включаем CORS для всех ---
 
-  app.use('/uploads', (req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*'); // yoki yuqoridagi originlar ro‘yxatini yozish mumkin
-    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    next();
-  }, express.static(join(__dirname, '..', 'uploads')));
+
 
   app.enableCors({
     origin:'*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
+
+   app.use(
+    '/uploads',
+    express.static(path.join(__dirname, '..', 'uploads'), {
+      setHeaders: (res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*'); // yoki front domeningni yoz
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+      },
+    }),
+  );
 
   await app.listen(process.env.PORT ?? 3000);
   console.log(`🚀 Server running on port ${process.env.PORT || 3000}`);
