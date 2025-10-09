@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,6 +15,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Request } from 'express';
 
 @Controller('create-user')
 export class UsersController {
@@ -22,24 +24,21 @@ export class UsersController {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  // --- Получаем реальный URL Telegram-фото (если редирект) ---
   private async resolveTelegramPhotoUrl(photoUrl: string): Promise<string> {
     try {
       const res = await axios.head(photoUrl, {
         maxRedirects: 0,
         validateStatus: null,
       });
-      const redirectUrl = res.headers['location'];
-      return redirectUrl || photoUrl;
+      return res.headers['location'] || photoUrl;
     } catch {
       return photoUrl;
     }
   }
 
-  // --- Скачиваем и сохраняем фото локально ---
   private async downloadAndSave(photoUrl: string, userId: number): Promise<string> {
     try {
-      const uploadsDir = path.join(process.cwd(), 'uploads'); // Railway-friendly
+      const uploadsDir = path.join(process.cwd(), 'uploads');
       if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true });
       }
@@ -50,7 +49,7 @@ export class UsersController {
       const response = await axios.get(photoUrl, { responseType: 'arraybuffer' });
       fs.writeFileSync(filePath, response.data);
 
-      // Возвращаем относительный путь
+      // возвращаем относительный путь
       return `uploads/${fileName}`;
     } catch (error) {
       console.error('Ошибка загрузки фото:', error.message);
@@ -60,20 +59,21 @@ export class UsersController {
 
   // --- Создание пользователя ---
   @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
+  async create(@Body() createUserDto: CreateUserDto, @Req() req: Request) {
     const userExists = await this.userRepository.findOne({
       where: { user_id: createUserDto.user_id },
     });
 
-    // Обновляем фото (если есть)
     if (createUserDto.photo_url) {
       try {
         const realUrl = await this.resolveTelegramPhotoUrl(createUserDto.photo_url);
         const localPath = await this.downloadAndSave(realUrl, Number(createUserDto.user_id));
 
-        const BASE_URL =
-          process.env.BASE_URL || 'https://radarbackend-production.up.railway.app';
+        const protocol = req.protocol;
+        const host = req.get('host');
+        const BASE_URL = `${protocol}://${host}`;
         createUserDto.photo = `${BASE_URL}/${localPath.replace(/\\/g, '/')}`;
+
         console.log('Фото сохранено:', createUserDto.photo);
       } catch (err) {
         console.error('Ошибка при загрузке фото:', err.message);
@@ -81,7 +81,6 @@ export class UsersController {
       }
     }
 
-    // Записываем последнюю активность
     createUserDto['last_active_time'] = new Date().toISOString();
 
     if (userExists) {
@@ -95,18 +94,23 @@ export class UsersController {
 
   // --- Обновление пользователя ---
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: Request,
+  ) {
     if (updateUserDto.photo_url) {
       const realUrl = await this.resolveTelegramPhotoUrl(updateUserDto.photo_url);
       const localPath = await this.downloadAndSave(realUrl, Number(id));
 
-      const BASE_URL =
-        process.env.BASE_URL || 'https://radarbackend-production.up.railway.app';
+      const protocol = req.protocol;
+      const host = req.get('host');
+      const BASE_URL = `${protocol}://${host}`;
       updateUserDto.photo = `${BASE_URL}/${localPath.replace(/\\/g, '/')}`;
+
       console.log('Фото обновлено:', updateUserDto.photo);
     }
 
-    // Обновляем дату последней активности
     updateUserDto['last_active_time'] = new Date().toISOString();
 
     await this.userRepository.update(+id, updateUserDto);

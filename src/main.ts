@@ -25,7 +25,7 @@ async function bootstrap() {
   // });
   // --- 2. Включаем CORS для всех ---
 
-
+  app.set('trust proxy', 1);
 
   app.enableCors({
     origin:'*',
