@@ -23,15 +23,13 @@ async function bootstrap() {
   app.use('/uploads', (req, res) => {
     res.status(200).send('Uploads directory — доступ только к файлам.');
   });
+  // --- 2. Включаем CORS для всех ---
 
-  // // Получаем native Express instance и сохраняем в global
-  // const expressApp = app.getHttpAdapter().getInstance();
-  // // безопасно присваиваем глобально
-  // (global as unknown as { express?: import('express').Express }).express = expressApp;
-
-  // app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-  //   prefix: '/uploads/',
-  // });
+  app.use('/uploads', (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*'); // yoki yuqoridagi originlar ro‘yxatini yozish mumkin
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    next();
+  }, express.static(join(__dirname, '..', 'uploads')));
 
   app.enableCors({
     origin:'*',
