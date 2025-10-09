@@ -29,8 +29,6 @@ export class AppUpdate {
     const userId = ctx.from?.id ?? null;
     const firstName = ctx.from?.first_name ?? null;
     const lastName = ctx.from?.last_name ?? null;
-
-
     const lastActive = new Date();
 
     try {
