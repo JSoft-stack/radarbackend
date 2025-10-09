@@ -20,7 +20,7 @@ export class UsersController {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   // 📥 Скачиваем фото и сохраняем в uploads
   private async downloadAndSave(photoUrl: string, userId: number): Promise<string> {
@@ -82,7 +82,7 @@ export class UsersController {
     if (updateUserDto.photo_url) {
       const localPath = await this.downloadAndSave(
         updateUserDto.photo_url,
-        +id,
+        Number(id),
       );
       updateUserDto.photo = localPath;
     }
