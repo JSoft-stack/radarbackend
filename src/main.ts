@@ -1,10 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as fs from 'fs';
 import { join } from 'path';
+import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+   // создаём uploads, если её нет
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Папка uploads создана автоматически');
+  }
 
   // Получаем native Express instance и сохраняем в global
   const expressApp = app.getHttpAdapter().getInstance();
@@ -16,7 +25,7 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: '*',
+    origin: ['https://myfrontend.vercel.app', 'http://localhost:3000,https://radar-search.vercel.app/'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     preflightContinue: false,
     optionsSuccessStatus: 204,

@@ -20,34 +20,36 @@ export class UsersController {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) { }
+  ) {}
 
-  // 📥 Скачиваем фото и сохраняем в uploads
+  private async resolveTelegramPhotoUrl(photoUrl: string): Promise<string> {
+    try {
+      const res = await axios.head(photoUrl, {
+        maxRedirects: 0,
+        validateStatus: null,
+      });
+      const redirectUrl = res.headers['location'];
+      return redirectUrl || photoUrl;
+    } catch {
+      return photoUrl;
+    }
+  }
+
   private async downloadAndSave(photoUrl: string, userId: number): Promise<string> {
     try {
-      const uploadDir = path.resolve(__dirname, '..', '..', 'uploads', 'users');
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
 
       const fileName = `${userId}.jpg`;
-      const filePath = path.join(uploadDir, fileName);
-      const writer = fs.createWriteStream(filePath);
+      const filePath = path.join(uploadsDir, fileName);
 
-      const response = await axios({
-        url: photoUrl,
-        method: 'GET',
-        responseType: 'stream',
-      });
+      const response = await axios.get(photoUrl, { responseType: 'arraybuffer' });
+      fs.writeFileSync(filePath, response.data);
 
-      response.data.pipe(writer);
-
-      // Возвращаем Promise, который выполняется после записи файла
-      await new Promise<void>((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-      });
-
-      // Возвращаем путь от вашей папки
-      return `/uploads/users/${fileName}`;
+      // Возвращаем относительный путь
+      return `uploads/${fileName}`;
     } catch (error) {
       console.error('Ошибка загрузки фото:', error.message);
       throw new BadRequestException('Не удалось сохранить фото');
@@ -56,21 +58,25 @@ export class UsersController {
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
-    const existing = await this.userRepository.findOne({
+    const userExists = await this.userRepository.findOne({
       where: { user_id: createUserDto.user_id },
     });
 
     if (createUserDto.photo_url) {
-      const localPath = await this.downloadAndSave(
-        createUserDto.photo_url,
-        Number(createUserDto.user_id),
-      );
-      createUserDto.photo = localPath; // сохраняем локальный путь
+      try {
+        const realUrl = await this.resolveTelegramPhotoUrl(createUserDto.photo_url);
+        const localPath = await this.downloadAndSave(realUrl, Number(createUserDto.user_id));
+        createUserDto.photo = localPath;
+        console.log('Фото сохранено:', localPath);
+      } catch (err) {
+        console.error('Ошибка при загрузке фото:', err.message);
+        throw new BadRequestException('Не удалось сохранить фото');
+      }
     }
 
-    if (existing) {
-      await this.userRepository.update(existing.id, createUserDto);
-      return this.userRepository.findOne({ where: { id: existing.id } });
+    if (userExists) {
+      await this.userRepository.update(userExists.id, createUserDto);
+      return this.userRepository.findOne({ where: { id: userExists.id } });
     }
 
     const user = this.userRepository.create(createUserDto);
@@ -80,11 +86,10 @@ export class UsersController {
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     if (updateUserDto.photo_url) {
-      const localPath = await this.downloadAndSave(
-        updateUserDto.photo_url,
-        Number(id),
-      );
+      const realUrl = await this.resolveTelegramPhotoUrl(updateUserDto.photo_url);
+      const localPath = await this.downloadAndSave(realUrl, Number(id));
       updateUserDto.photo = localPath;
+      console.log('Фото обновлено:', localPath);
     }
 
     await this.userRepository.update(+id, updateUserDto);
