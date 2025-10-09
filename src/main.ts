@@ -25,7 +25,7 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://radar-search.vercel.app/'],
+    origin: ['*',' http://localhost:3000', 'https://radar-search.vercel.app/'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     preflightContinue: false,
     optionsSuccessStatus: 204,
