@@ -29,27 +29,27 @@ const localSession = new LocalSession({ database: 'session_db.json' });
       include: [],
     }),
 
-    // TypeOrmModule.forRoot({
-    //   type: 'postgres',
-    //   url: process.env.DATABASE_URL, // Railway'dan olinadi
-    //   autoLoadEntities: true,
-    //   synchronize: true, // dev uchun, productionda false qil
-    //   ssl: {
-    //     rejectUnauthorized: false, // Railway uchun kerak
-    //   },
-    // }),
-
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '123456',
-      database: 'geoRadar',
-      entities: [join(__dirname + '/**/*.entity{.ts,.js}')],
-      migrations: [join(__dirname + '/migrations/*{.ts,.js}')],
-      synchronize: true,
+      url: process.env.DATABASE_URL, // Railway'dan olinadi
+      autoLoadEntities: true,
+      synchronize: true, // dev uchun, productionda false qil
+      ssl: {
+        rejectUnauthorized: false, // Railway uchun kerak
+      },
     }),
+
+    // TypeOrmModule.forRoot({
+    //   type: 'postgres',
+    //   host: 'localhost',
+    //   port: 5432,
+    //   username: 'postgres',
+    //   password: '123456',
+    //   database: 'geoRadar',
+    //   entities: [join(__dirname + '/**/*.entity{.ts,.js}')],
+    //   migrations: [join(__dirname + '/migrations/*{.ts,.js}')],
+    //   synchronize: true,
+    // }),
 
     UsersModule,
     TypeOrmModule.forFeature([User, Photo]),
